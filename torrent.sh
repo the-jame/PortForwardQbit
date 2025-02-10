@@ -48,7 +48,6 @@ while true; do
     fi
 
     echo "Mapped public port: $mapped_port"
-    notify-send "Port Forwarding" "Mapped public port: $mapped_port"
 
     # Check if the mapped port has changed
     if [[ "$mapped_port" != "$previous_mapped_port" ]]; then
@@ -60,7 +59,7 @@ while true; do
         # Update the previous mapped port
         previous_mapped_port="$mapped_port"
     else
-        echo "Mapped port has not changed. Skipping qBittorrent port update."
+        echo "Mapped port not changed. Skipping qBittorrent port update."
     fi
 
     sleep 45
