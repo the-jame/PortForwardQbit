@@ -1,4 +1,4 @@
-# ProtonVPN automatic port fowarding & qbittorrent updating
+# ProtonVPN automatic port forwarding & qbittorrent update
 
 This bash script automates the process of mapping the public port for qBittorrent using the natpmp protocol. It periodically checks for changes in the mapped public port and updates the qBittorrent port accordingly. You do still have to keep the terminal window open.
 
