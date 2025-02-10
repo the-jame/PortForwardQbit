@@ -5,6 +5,8 @@ This bash script automates the process of mapping the public port for qBittorren
 ## Prerequisites
 
 - **qBittorrent**: Ensure that `qBittorrent` is installed on your system.
+- **qBittorrent**: web interface is enabled.
+- **qBittorrent**: script is running on the same machine + web interface settings do not require a password for localhost 
 
 ## Usage
 
