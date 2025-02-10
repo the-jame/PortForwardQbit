@@ -1,42 +1,8 @@
 #!/usr/bin/env bash
 
-# Function to check if qbittorrent is installed and install if not
-install_qbittorrent() {
-    if command -v qbittorrent &> /dev/null; then
-        return 0  # qbittorrent is already installed
-    fi
-    
-    echo "Error: qbittorrent is not installed."
-    
-    # Check if qbittorrent is available on flatpak
-    if command -v flatpak &> /dev/null; then
-        echo "Do you want to install qBittorrent via Flatpak? (y/n)"
-        read choice
-        if [ "$choice" == "y" ]; then
-            flatpak install flathub org.qbittorrent.qBittorrent
-            return $?
-        fi
-    fi
-    
-    # Check if qbittorrent is available on the package manager
-    if command -v sudo &> /dev/null; then
-        echo "Do you want to install qBittorrent via your package manager? (y/n)"
-        read choice
-        if [ "$choice" == "y" ]; then
-            sudo dnf install -y qbittorrent  # Change this line as needed for your package manager
-            return $?
-        fi
-    fi
-    
-    echo "Error: Could not find a suitable method to install qbittorrent."
-    return 1
-}
-
 # Function to get the qBittorrent command for changing torrenting port
 get_qbittorrent_command() {
-    if command -v flatpak &> /dev/null && flatpak list | grep -q org.qbittorrent.qBittorrent; then
-        echo "flatpak run org.qbittorrent.qBittorrent --torrenting-port="
-    elif command -v qbittorrent &> /dev/null; then
+    if command -v qbittorrent &> /dev/null; then
         echo "qbittorrent --torrenting-port="
     else
         echo "Error: qBittorrent is not installed."
@@ -44,8 +10,6 @@ get_qbittorrent_command() {
     fi
 }
 
-# Check and install qbittorrent
-install_qbittorrent || exit 1
 
 previous_mapped_port=""
 
