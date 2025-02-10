@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
 
-# Function to get the qBittorrent command for changing torrenting port
-get_qbittorrent_command() {
-    if command -v qbittorrent &> /dev/null; then
-        echo "qbittorrent --torrenting-port="
-    else
-        echo "Error: qBittorrent is not installed."
-        return 1
-    fi
-}
+# qBittorrent Web UI API settings
+QBITTORRENT_HOST="localhost"
+QBITTORRENT_PORT="8080"
+QBITTORRENT_API_URL="http://$QBITTORRENT_HOST:$QBITTORRENT_PORT/api/v2"
 
-# Function to extract the mapped port from natpmpc output
-extract_mapped_port() {
-    local mapping_info="$1"
-    if [[ $mapping_info =~ Mapped\ public\ port\ ([0-9]+) ]]; then
-        echo "${BASH_REMATCH[1]}"
+# Function to set qBittorrent listen port via Web UI API
+set_qbittorrent_port() {
+    local port="$1"
+    local payload="json={\"listen_port\": $port}"
+
+    # Send the request to update the listen port
+    curl -s -X POST -d "$payload" "$QBITTORRENT_API_URL/app/setPreferences"
+    if [[ $? -eq 0 ]]; then
+        echo "Successfully updated qBittorrent listen port to $port."
     else
-        echo ""
+        echo "ERROR: Failed to update qBittorrent listen port."
     fi
 }
 
@@ -39,7 +38,7 @@ while true; do
     fi
 
     # Extract the mapped port (use TCP output as it's more reliable)
-    mapped_port=$(extract_mapped_port "$tcp_mapping_info")
+    mapped_port=$(echo "$tcp_mapping_info" | grep -oP 'Mapped\ public\ port\ \K[0-9]+')
     if [[ -z "$mapped_port" ]]; then
         echo "ERROR: Failed to extract Mapped public port from natpmpc output."
         echo "UDP Output: $udp_mapping_info"
@@ -53,19 +52,13 @@ while true; do
 
     # Check if the mapped port has changed
     if [[ "$mapped_port" != "$previous_mapped_port" ]]; then
-        echo "Changing qBittorrent port to $mapped_port"
+        echo "Changing qBittorrent listen port to $mapped_port"
 
-        # Get the qBittorrent command
-        qbittorrent_command=$(get_qbittorrent_command)
-        if [ $? -eq 0 ]; then
-            # Change qBittorrent port
-            $qbittorrent_command$mapped_port
+        # Update qBittorrent listen port via Web UI API
+        set_qbittorrent_port "$mapped_port"
 
-            # Update the previous mapped port
-            previous_mapped_port="$mapped_port"
-        else
-            echo "Error: Unable to determine qBittorrent command."
-        fi
+        # Update the previous mapped port
+        previous_mapped_port="$mapped_port"
     else
         echo "Mapped port has not changed. Skipping qBittorrent port update."
     fi
