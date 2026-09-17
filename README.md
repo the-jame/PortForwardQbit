@@ -1,41 +1,69 @@
-# ProtonVPN automatic port forwarding & qbittorrent update
+# ProtonVPN automatic port forwarding & qBittorrent update
 
-This bash script automates the process of mapping the public port for qBittorrent using the natpmp protocol. It periodically checks for changes in the mapped public port and updates the qBittorrent port accordingly. You do still have to keep the terminal window open.
+A simple bash script that keeps a ProtonVPN NAT-PMP port mapping alive and
+updates qBittorrent automatically whenever the mapped port changes. It does
+both jobs in one script — no cron jobs, no extra tools beyond `natpmpc`.
 
 ## Prerequisites
 
-- **qBittorrent**: Ensure that `qBittorrent` is installed on your system.
-- **qBittorrent**: web interface is enabled & qbittorrent is open
-- **qBittorrent**: script is running on the same machine + web interface settings do not require a password for localhost 
+- **ProtonVPN**: a paid plan with port forwarding enabled, connected via
+  WireGuard or OpenVPN
+- **natpmpc**: installed on your system (`sudo apt install natpmpc` on
+  Debian/Ubuntu)
+- **qBittorrent**: installed with the Web interface enabled, and
+  **Bypass authentication for clients on localhost** checked in
+  Tools → Options → Web UI
+- The script runs on the same machine as qBittorrent, and the VPN
+  connection is up on that machine
 
 ## Usage
 
-1. Copy the script to your local machine or server.
-2. Make the script executable:
+1. Save the script and make it executable:
    ```bash
-   chmod +x torrent.sh
+   chmod +x portupdate.sh
    ```
-3. Run the script:
+2. Run it:
    ```bash
-   ./torrent.sh
+   ./portupdate.sh
    ```
+3. Leave the terminal window open — the script needs to keep running to
+   renew the port mapping (mappings expire after 60 seconds without a
+   renewal).
 
 ## Workflow
 
-1. The script uses natpmpc to port forward using Proton's published instructions. It sets the port in qbittorrent initially.
+1. On each cycle the script asks the VPN gateway for a UDP port mapping
+   (public port 0 = let the server assign one).
+2. It then binds TCP to that exact same public port, so UDP and TCP always
+   match.
+3. It compares the mapped port against the previous one. If it changed (or
+   on the first run), it updates qBittorrent's listening port through the
+   Web UI API. If not, it skips the update.
+4. It waits 45 seconds and repeats, keeping the mapping alive and
+   qBittorrent in sync forever.
 
-2. It enters a continuous loop, checking for changes in the mapped public port every 45 seconds.
-
-3. It uses the `natpmpc` tool to obtain the gateway address and map the public port using the natpmp protocol.
-
-4. If the mapping is successful, the script extracts the mapped public port and compares it with the previous port. If the port changes, the port is also updated in qbittorrent automatically.
-
-5. The script repeats the process in the loop, continuously monitoring for changes in the mapped public port.
+If the VPN drops, the mapping dies with it — the script just reports the
+error and keeps retrying until the connection is back.
 
 ## Configuration
 
-- Adjust the `sleep` duration at the end of the script to control how frequently the script checks for changes (default is 45 seconds).
+Edit the variables at the top of the script if needed:
+
+- `QBITTORRENT_HOST` / `QBITTORRENT_PORT` — where the qBittorrent Web UI
+  is listening (default `localhost:8080`)
+- `GATEWAY` — the NAT-PMP gateway (`10.2.0.1` is Proton's default)
+- `LIFETIME` — requested mapping lifetime in seconds (default 60; Proton's
+  maximum)
+- `sleep 45` at the end of the loop — how often the mapping is renewed.
+  Keep this below `LIFETIME`.
 
 ## Notes
 
-- You should only need to run this one script to keep the port forward active AND update Qbittorrent simultaneously. Hope this helps.
+- The script also disables qBittorrent's "different port on each startup"
+  setting, so it can't fight the script.
+- In qBittorrent it's worth enabling **Tools → Options → Advanced →
+  Reannounce to all trackers when IP or port changed** — after a port
+  change, peers otherwise keep the old port until the next tracker
+  announce.
+- Stopping the script simply lets the mapping expire; the next run picks
+  up whatever port the server assigns.
