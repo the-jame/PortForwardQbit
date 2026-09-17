@@ -67,3 +67,11 @@ Edit the variables at the top of the script if needed:
   announce.
 - Stopping the script simply lets the mapping expire; the next run picks
   up whatever port the server assigns.
+---
+
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+</p>
+<p align="center">
+  <sub>Copyright © 2026 <a href="https://github.com/the-jame">the-jame</a> · Released under the <a href="LICENSE">MIT License</a></sub>
+</p>
